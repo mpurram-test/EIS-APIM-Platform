@@ -64,6 +64,12 @@ pipeline {
 
     stage('Terraform Init/Validate') {
       steps {
+        withCredentials([
+          string(credentialsId: 'stage-apim-azure-subscription-id', variable: 'ARM_SUBSCRIPTION_ID'),
+          string(credentialsId: 'stage-apim-azure-client',          variable: 'ARM_CLIENT_ID'),
+          string(credentialsId: 'stage-apim-azure-secret',          variable: 'ARM_CLIENT_SECRET'),
+          string(credentialsId: 'stage-apim-azure-tenant',          variable: 'ARM_TENANT_ID')
+        ]){
         sh '''
           #!/usr/bin/env bash
           set -e
@@ -89,7 +95,7 @@ pipeline {
           terraform -chdir="${TF_DIR}" validate -no-color
         '''
       }
-    }
+    }}
 
     stage('Terraform Plan') {
       steps {
