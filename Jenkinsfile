@@ -69,33 +69,30 @@ pipeline {
           string(credentialsId: 'stage-apim-azure-client',          variable: 'ARM_CLIENT_ID'),
           string(credentialsId: 'stage-apim-azure-secret',          variable: 'ARM_CLIENT_SECRET'),
           string(credentialsId: 'stage-apim-azure-tenant',          variable: 'ARM_TENANT_ID')
-        ]){
-        sh '''
-          #!/usr/bin/env bash
-          set -e
+        ]) {
+          sh """
+            set -e
 
-          echo "[Terraform] Init in: ${TF_DIR}"
-          terraform -chdir="${TF_DIR}" init -input=false -no-color
+            echo "[Init] Using TF_DIR=${TF_DIR}"
+            # Pass the remote-state settings here
+            terraform -chdir="${TF_DIR}" init -backend-config=backend.tfvars -input=false -no-color
 
-          set +e
-          FMT_OUTPUT=$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
-          FMT_STATUS=$?
-          set -e
+            # Optional formatting & validation
+            set +e
+            FMT_OUTPUT=\$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
+            FMT_STATUS=\$?
+            set -e
+            if [ "\${FMT_STATUS}" -ne 0 ]; then
+              echo "[Terraform] fmt issues detected:"
+              echo "\${FMT_OUTPUT}"
+              exit \${FMT_STATUS}
+            fi
 
-          if [ "${FMT_STATUS}" -ne 0 ]; then
-            echo "[Terraform] Formatting issues detected (exit ${FMT_STATUS})."
-            echo "----- BEGIN terraform fmt diff -----"
-            echo "${FMT_OUTPUT}"
-            echo "----- END terraform fmt diff -----"
-            echo "Fix locally with:"
-            echo "  terraform -chdir=\"${TF_DIR}\" fmt -recursive"
-            exit "${FMT_STATUS}"   # usually 3 for fmt issues
-          fi
-
-          terraform -chdir="${TF_DIR}" validate -no-color
-        '''
+            terraform -chdir="${TF_DIR}" validate -no-color
+          """
+        }
       }
-    }}
+    }
 
     stage('Terraform Plan') {
       steps {
