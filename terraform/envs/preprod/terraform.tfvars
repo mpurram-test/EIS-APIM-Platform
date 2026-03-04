@@ -12,26 +12,25 @@ fragments = {
 
 # ========= Products + regex link rules =========
 products = {
-  "quavo" = {
+  quavo = {
     display_name          = "Quavo"
     description           = "External partner access"
     subscription_required = true
     published             = true
     api_name_patterns     = ["^party-eis-v1$"]
-    product_policy_path   = "../../../policies/product-policies/quavo.xml"
+    # Keep this just a simple, repo-relative path (or even just the file name)
+    product_policy_path   = "policies/product-policies/quavo.xml"
   }
-}
-products = {
-  "quavo" = {
+
+  seacoast_internal = {
     display_name          = "Seacoast Internal"
     description           = "Internal partner access"
     subscription_required = true
     published             = true
     api_name_patterns     = ["^party-eis-v1$", "^party-fis-v1$"]
-    product_policy_path   = "../../../policies/product-policies/seacoastInternal.xml"
+    product_policy_path   = "policies/product-policies/seacoastInternal.xml"
   }
 }
-
 # ========= Subscriptions =========
 subscriptions = [
   { display_name = "Quavo - Default",            product_id = "quavo" },
