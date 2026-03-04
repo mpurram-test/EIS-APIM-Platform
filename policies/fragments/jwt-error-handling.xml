@@ -1,0 +1,37 @@
+<!--
+    IMPORTANT:
+    - Policy fragment are included as-is whenever they are referenced.
+    - If using variables. Ensure they are setup before use.
+    - Copy and paste your code here or simply start coding
+-->
+<fragment>
+	<choose>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "TokenNotPresent")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000101,"message": "EIS-Authorization Error: Authorization token [Authorization] is required."}]}</set-body>
+			</return-response>
+		</when>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "TokenInvalidSignature")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000102,"message": "EIS-Authorization Error: Authorization token [Authorization] is invalid."}]}</set-body>
+			</return-response>
+		</when>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "TokenExpired")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000103,"message": "EIS-Authorization Error: Authorization token [Authorization] expired."}]}</set-body>
+			</return-response>
+		</when>
+	</choose>
+</fragment>

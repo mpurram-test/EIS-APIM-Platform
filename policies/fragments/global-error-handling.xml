@@ -1,0 +1,65 @@
+<!--
+    IMPORTANT:
+    - Policy fragment are included as-is whenever they are referenced.
+    - If using variables. Ensure they are setup before use.
+    - Copy and paste your code here or simply start coding
+-->
+<fragment>
+	<choose>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "SubscriptionKeyNotFound")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000101,"message": "EIS-Authorization Error: Subscription key [subscriptionKey] is required."}]}</set-body>
+			</return-response>
+		</when>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "SubscriptionKeyInvalid")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000102,"message": "EIS-Authorization Error: Subscription key [subscriptionKey] is invalid."}]}</set-body>
+			</return-response>
+		</when>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "CallerIpNotAllowed")">
+			<return-response>
+				<set-status code="401" reason="Unauthorized" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000104,"message": "EIS-Authorization Error: Source IP address is not allowed."}]}</set-body>
+			</return-response>
+		</when>
+		<when condition="@(context.LastError != null && context.LastError.Reason == "OperationNotFound")">
+			<return-response>
+				<set-status code="404" reason="Not Found" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>{"status": "ERROR","errors": [{"code": 1000201,"message": "EIS-Not Found: Endpoint or HTTP method was not found."}]}</set-body>
+			</return-response>
+		</when>
+		<otherwise>
+			<return-response>
+				<set-status code="500" reason="Server Error" />
+				<set-header name="Content-Type" exists-action="override">
+					<value>application/json</value>
+				</set-header>
+				<set-body>@{
+                            // Construct a custom JSON error response body
+                            var error = context.LastError;
+                            var json_error = new JObject(
+                                new JProperty("errorSource", error?.Source),
+                                new JProperty("errorMessage", error?.Message),
+                                new JProperty("errorReason", error?.Reason)
+                            );
+                            string responseString = "{\"status\":\"ERROR\",\"errors\": [{\"code\": 1000900,\"message\": \"EIS-Unexpected Error: " + error?.Reason + " - " + error?.Message + "\"}]}";
+                            return responseString;
+                }</set-body>
+			</return-response>
+		</otherwise>
+	</choose>
+</fragment>

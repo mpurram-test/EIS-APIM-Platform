@@ -1,0 +1,19 @@
+<!--
+    IMPORTANT:
+    - Policy fragment are included as-is whenever they are referenced.
+    - If using variables. Ensure they are setup before use.
+    - Copy and paste your code here or simply start coding
+-->
+<fragment>
+	<validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized. Access token is missing or invalid.">
+		<openid-config url="https://login.microsoftonline.com/{{AzureTenantID}}/v2.0/.well-known/openid-configuration" />
+		<issuers>
+			<issuer>https://sts.windows.net/{{AzureTenantID}}/</issuer>
+		</issuers>
+		<required-claims>
+			<claim name="aud">
+				<value>api://{{APIM-App-ID}}</value>
+			</claim>
+		</required-claims>
+	</validate-jwt>
+</fragment>
