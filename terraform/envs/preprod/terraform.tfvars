@@ -17,15 +17,27 @@ products = {
     description           = "External partner access"
     subscription_required = true
     published             = true
-    api_name_patterns     = ["^party-eis-v1$", "^party-fis-v1$"]
+    api_name_patterns     = ["^party-eis-v1$"]
     product_policy_path   = "../../../policies/product-policies/quavo.xml"
+  }
+}
+products = {
+  "quavo" = {
+    display_name          = "Seacoast Internal"
+    description           = "Internal partner access"
+    subscription_required = true
+    published             = true
+    api_name_patterns     = ["^party-eis-v1$", "^party-fis-v1$"]
+    product_policy_path   = "../../../policies/product-policies/seacoastInternal.xml"
   }
 }
 
 # ========= Subscriptions =========
 subscriptions = [
-  { display_name = "Quavo – Default", product_id = "quavo" }  # short key, resolved in main.tf
+  { display_name = "Quavo - Default",            product_id = "quavo" },
+  { display_name = "Seacoast Internal - Default", product_id = "seacoast_internal" }
 ]
+
 # ========= Named Values =========
 named_values = {
   "APIM-App-ID" = { display_name = "APIM-App-ID", secret = false, value = "<client-id-guid>" }
