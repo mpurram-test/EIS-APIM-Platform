@@ -44,7 +44,7 @@ pipeline {
       steps {
         script {
           env.TF_ENV = params.ENV?.trim() ?: (env.BRANCH_NAME == 'main' ? 'prod' : 'preprod')
-          env.TF_DIR = "terraform/${env.TF_ENV}"   // or "apim/terraform/${env.TF_ENV}" if that’s your path
+          env.TF_DIR = "terraform/envs/${env.TF_ENV}"   // or "apim/terraform/${env.TF_ENV}" if that’s your path
           echo "Computed ENV=${env.TF_ENV}  TF_DIR=${env.TF_DIR}"
         }
       }
