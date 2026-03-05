@@ -5,12 +5,12 @@
     - Copy and paste your code here or simply start coding
 -->
 <fragment>
-	<return-response>
-		<set-status code="401" reason="Unauthorized" />
-		<set-header name="Content-Type" exists-action="override">
-			<value>application/json</value>
-		</set-header>
-		<set-body>@{
+    <return-response>
+        <set-status code="401" reason="Unauthorized" />
+        <set-header name="Content-Type" exists-action="override">
+            <value>application/json</value>
+        </set-header>
+        <set-body>@{
                     // Construct a custom JSON error response body
                     var error = context.LastError;
                     return new JObject(
@@ -19,5 +19,5 @@
                         new JProperty("errorReason", error?.Reason)
                     ).ToString();
                 }</set-body>
-	</return-response>
+    </return-response>
 </fragment>

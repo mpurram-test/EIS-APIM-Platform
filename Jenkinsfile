@@ -1,3 +1,5 @@
+/* groovylint-disable CompileStatic */
+
 pipeline {
   agent { label 'dev' }
 
@@ -9,6 +11,7 @@ pipeline {
     timestamps()
     disableConcurrentBuilds()
     timeout(time: 60, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '10'))
   }
 
   environment {
@@ -16,6 +19,10 @@ pipeline {
     TF_IN_AUTOMATION = 'true'
     RESOURCE_GROUP_NAME_CRED = credentials('stage-apim-rg-name')
     APIM_NAME_CRED           = credentials('stage-apim-apim-name')
+    ARM_SUBSCRIPTION_ID      = credentials('stage-apim-azure-subscription-id')
+    ARM_CLIENT_ID            = credentials('stage-apim-azure-client')
+    ARM_CLIENT_SECRET        = credentials('stage-apim-azure-secret')
+    ARM_TENANT_ID            = credentials('stage-apim-azure-tenant')
   }
 
   stages {
@@ -40,15 +47,17 @@ pipeline {
         '''
       }
     }
+
     stage('Resolve ENV & TF_DIR') {
       steps {
         script {
           env.TF_ENV = params.ENV?.trim() ?: (env.BRANCH_NAME == 'main' ? 'prod' : 'preprod')
-          env.TF_DIR = "terraform/envs/${env.TF_ENV}"   // or "apim/terraform/${env.TF_ENV}" if that’s your path
+          env.TF_DIR = "terraform/envs/${env.TF_ENV}"
           echo "Computed ENV=${env.TF_ENV}  TF_DIR=${env.TF_DIR}"
         }
       }
     }
+
     stage('Checkout') {
       steps {
         checkout scm
@@ -56,95 +65,124 @@ pipeline {
           #!/usr/bin/env bash
           set -e
           echo "Repo root:" && ls -la
-          echo ""
-          echo "API dir:" && ls -la api || true
         '''
       }
     }
-
     stage('Terraform Init/Validate') {
       steps {
-        withCredentials([
-          string(credentialsId: 'stage-apim-azure-subscription-id', variable: 'ARM_SUBSCRIPTION_ID'),
-          string(credentialsId: 'stage-apim-azure-client',          variable: 'ARM_CLIENT_ID'),
-          string(credentialsId: 'stage-apim-azure-secret',          variable: 'ARM_CLIENT_SECRET'),
-          string(credentialsId: 'stage-apim-azure-tenant',          variable: 'ARM_TENANT_ID')
-        ]) {
-          sh """
-            set -e
+        sh """
+          set -e
 
-            echo "[Init] Using TF_DIR=${TF_DIR}"
-            # Pass the remote-state settings here
-            terraform -chdir="${TF_DIR}" init -backend-config=backend.tfvars -input=false -no-color
+          echo "[Init] Using TF_DIR=${TF_DIR}"
+          terraform -chdir="${TF_DIR}" init -backend-config=backend.tfvars -input=false -no-color
 
-            # Optional formatting & validation
-            set +e
-            FMT_OUTPUT=\$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
-            FMT_STATUS=\$?
-            set -e
-            if [ "\${FMT_STATUS}" -ne 0 ]; then
-              echo "[Terraform] fmt issues detected:"
-              echo "\${FMT_OUTPUT}"
-              exit \${FMT_STATUS}
-            fi
+          set +e
+          FMT_OUTPUT=\$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
+          FMT_STATUS=\$?
+          set -e
+          if [ "\${FMT_STATUS}" -ne 0 ]; then
+            echo "[Terraform] fmt issues detected:"
+            echo "\${FMT_OUTPUT}"
+            exit \${FMT_STATUS}
+          fi
 
-            terraform -chdir="${TF_DIR}" validate -no-color
-          """
-        }
+          terraform -chdir="${TF_DIR}" validate -no-color
+        """
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        withCredentials([
-          string(credentialsId: 'stage-apim-azure-subscription-id', variable: 'ARM_SUBSCRIPTION_ID'),
-          string(credentialsId: 'stage-apim-azure-client',          variable: 'ARM_CLIENT_ID'),
-          string(credentialsId: 'stage-apim-azure-secret',          variable: 'ARM_CLIENT_SECRET'),
-          string(credentialsId: 'stage-apim-azure-tenant',          variable: 'ARM_TENANT_ID')
-        ]) {
-          sh '''
-            #!/usr/bin/env bash
-            set -e
+        sh """
+          #!/usr/bin/env bash
+          set -e
 
-            echo "[Plan] Checking bundled specs exist at: ${WORKSPACE}/build/api-bundled"
-            ls -la "${WORKSPACE}/build/api-bundled" || { echo "ERROR: No bundled specs found"; exit 1; }
+          echo "[Plan] Checking bundled specs exist at: ${WORKSPACE}/build/api-bundled"
+          if [ ! -d "${WORKSPACE}/build/api-bundled" ]; then
+            echo "ERROR: No bundled specs found at ${WORKSPACE}/build/api-bundled"
+            exit 1
+          fi
+          ls -la "${WORKSPACE}/build/api-bundled"
 
-            terraform -chdir="${TF_DIR}" plan -input=false -no-color \
-              -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
-              -var="api_management_name=${APIM_NAME_CRED}" \
-              -out=tfplan.out
-          '''
-        }
+          terraform -chdir="${TF_DIR}" plan -input=false -no-color \
+            -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
+            -var="api_management_name=${APIM_NAME_CRED}" \
+            -out=tfplan.out
+        """
       }
       post {
         always {
-          archiveArtifacts artifacts: '**/tfplan.out', fingerprint: true
+          archiveArtifacts artifacts: "${TF_DIR}/tfplan.out", fingerprint: true, allowEmptyArchive: false
         }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        withCredentials([
-          string(credentialsId: 'stage-apim-azure-subscription-id', variable: 'ARM_SUBSCRIPTION_ID'),
-          string(credentialsId: 'stage-apim-azure-client',          variable: 'ARM_CLIENT_ID'),
-          string(credentialsId: 'stage-apim-azure-secret',          variable: 'ARM_CLIENT_SECRET'),
-          string(credentialsId: 'stage-apim-azure-tenant',          variable: 'ARM_TENANT_ID')
-        ]) {
-          sh '''
-            #!/usr/bin/env bash
-            set -e
+        sh """
+          #!/usr/bin/env bash
+          set -e
 
-            echo "[Apply] Applying plan..."
-            terraform -chdir="${TF_DIR}" apply -input=false -no-color -auto-approve tfplan.out
-          '''
-        }
+          PLAN_FILE="${TF_DIR}/tfplan.out"
+          if [ ! -f "\${PLAN_FILE}" ]; then
+            echo "ERROR: Plan file not found at \${PLAN_FILE}"
+            exit 1
+          fi
+
+          # Capture state before apply
+          STATE_BEFORE="${TF_DIR}/state_before.txt"
+          terraform -chdir="${TF_DIR}" state list > "\${STATE_BEFORE}" 2>/dev/null || true
+          echo "[Apply] State snapshot saved: \$(wc -l < \${STATE_BEFORE}) resources"
+
+          # Attempt apply
+          echo "[Apply] Applying plan..."
+          if ! terraform -chdir="${TF_DIR}" apply -input=false -no-color -auto-approve "\${PLAN_FILE}"; then
+            echo "[Rollback] Apply failed. Rolling back newly created resources..."
+
+            # Capture state after failed apply
+            STATE_AFTER="${TF_DIR}/state_after.txt"
+            terraform -chdir="${TF_DIR}" state list > "\${STATE_AFTER}" 2>/dev/null || true
+
+            # Find resources that were created in this run (exist in AFTER but not in BEFORE)
+            # avoid bash process substitution to keep Groovy lint happy
+            NEW_RESOURCES=\$(grep -Fxv -f "\${STATE_BEFORE}" "\${STATE_AFTER}" || true)
+
+            if [ -n "\${NEW_RESOURCES}" ]; then
+              echo "[Rollback] Found \$(echo \"\${NEW_RESOURCES}\" | wc -l) newly created resources. Destroying..."
+              echo "\${NEW_RESOURCES}" | while IFS= read -r resource; do
+                echo "[Rollback] Destroying: \${resource}"
+                terraform -chdir="${TF_DIR}" destroy -target="\${resource}" -auto-approve -no-color
+              done
+              echo "[Rollback] Cleanup complete"
+            else
+              echo "[Rollback] No newly created resources found to destroy"
+            fi
+
+            # Clean up state files
+            rm -f "\${STATE_BEFORE}" "\${STATE_AFTER}"
+            exit 1
+          fi
+
+          # Clean up state files on success
+          rm -f "${TF_DIR}/state_before.txt" "${TF_DIR}/state_after.txt"
+          echo "[Apply] Deployment successful"
+        """
       }
     }
   }
 
   post {
-    success { echo "Build succeeded. ${BUILD_URL}" }
-    failure { echo "Build failed: ${BUILD_URL}" }
+    success {
+      echo "Build succeeded. ${BUILD_URL}"
+    }
+    failure {
+      echo "Build failed: ${BUILD_URL}"
+    }
+    always {
+      sh '''
+        find . -name "tfplan.out" -delete
+        echo "[Cleanup] Removed tfplan files"
+      '''
+    }
   }
 }

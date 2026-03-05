@@ -1,6 +1,3 @@
-# ========= Basic service =========
-resource_group_name = "rg-apim-preprod"
-api_management_name = "apim-preprod-001"
 
 # ========= Fragments (upload once, then reuse) =========
 fragments = {
@@ -14,32 +11,32 @@ fragments = {
 products = {
   quavo = {
     display_name          = "Quavo"
-    description           = "External partner access"
+    description           = "External partner access (updated description at $(date))"
     subscription_required = true
     published             = true
-    api_name_patterns     = ["^party-eis-v1$"]
+    api_name_patterns     = ["^party-reference-data-directory-eis-v1$"]
     # Keep this just a simple, repo-relative path (or even just the file name)
-    product_policy_path   = "policies/product-policies/quavo.xml"
+    product_policy_path = "policies/product-policies/quavo.xml"
   }
 
-  seacoast_internal = {
+  seacoast-internal = {
     display_name          = "Seacoast Internal"
-    description           = "Internal partner access"
+    description           = "Internal partner access (v2 updated)"
     subscription_required = true
     published             = true
-    api_name_patterns     = ["^party-eis-v1$", "^party-fis-v1$"]
+    api_name_patterns     = ["^party-reference-data-directory-eis-v1$", "^party-reference-data-directory-fis-v1$"]
     product_policy_path   = "policies/product-policies/seacoastInternal.xml"
   }
 }
 # ========= Subscriptions =========
 subscriptions = [
-  { display_name = "Quavo - Default",            product_id = "quavo" },
-  { display_name = "Seacoast Internal - Default", product_id = "seacoast_internal" }
+  { display_name = "Quavo - Default", product_id = "quavo" },
+  { display_name = "Seacoast Internal - Default", product_id = "seacoast-internal" }
 ]
 
 # ========= Named Values =========
 named_values = {
-  "APIM-App-ID" = { display_name = "APIM-App-ID", secret = false, value = "<client-id-guid>" }
+  "APIM-App-ID"   = { display_name = "APIM-App-ID", secret = false, value = "<client-id-guid>" }
   "AzureTenantID" = { display_name = "AzureTenantID", secret = false, value = "<tenant-guid>" }
   # Example Key Vault‑backed secret:
   # "Seacoast-Client-Secret" = {

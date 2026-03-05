@@ -8,5 +8,5 @@ variable "products" {
 }
 variable "apis_by_name" {
   description = "Map of API name => { id, name }"
-  type = map(object({ id = string, name = string }))
+  type        = map(object({ id = string, name = string }))
 }

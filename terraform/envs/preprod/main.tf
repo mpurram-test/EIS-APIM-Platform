@@ -14,8 +14,18 @@ data "azapi_resource_list" "apis" {
 }
 
 locals {
-  apis_raw     = try(data.azapi_resource_list.apis.output.value, [])
-  apis_by_name = { for a in local.apis_raw : a.name => { id = a.id, name = a.name } }
+  # azapi_resource_list output may be either:
+  # 1) an object with .value array, or
+  # 2) a JSON string (sometimes nested under .value).
+  apis_output_any = try(
+    data.azapi_resource_list.apis.output.value,
+    data.azapi_resource_list.apis.output,
+    {}
+  )
+
+  apis_output_obj = try(jsondecode(local.apis_output_any), local.apis_output_any)
+  apis_raw        = try(local.apis_output_obj.value, [])
+  apis_by_name    = { for a in local.apis_raw : a.name => { id = a.id, name = a.name } }
 }
 
 # Upload policy fragments
@@ -26,7 +36,7 @@ module "policy_fragments" {
   api_management_name = var.api_management_name
 
   # Pass from env tfvars: map(fragment_id => relative XML path)
-  fragments           = var.fragments
+  fragments = var.fragments
 }
 
 # Create products
@@ -45,11 +55,14 @@ module "products" {
       approval_required     = try(cfg.approval_required, false)
       published             = try(cfg.published, true)
       terms                 = try(cfg.terms, null)
+
+      api_name_patterns   = cfg.api_name_patterns
+      product_policy_path = try(cfg.product_policy_path, null)
     }
   }
 
-  # depends_on = [module.policy_fragments]
-  # (handy if you later include fragments in product policies)
+  depends_on = [module.policy_fragments]
+  # Products should be created after any fragments so policies can reference them
 }
 
 # Attach product-level policy (XML) 
@@ -81,7 +94,7 @@ module "links" {
     for pid, cfg in var.products : pid => {
       api_name_patterns = cfg.api_name_patterns
       # If you removed strict_min_match from the module/vars, drop this next line:
-      strict_min_match  = try(cfg.strict_min_match, null)
+      strict_min_match = try(cfg.strict_min_match, null)
     }
   }
 
@@ -119,10 +132,10 @@ module "subscriptions" {
   api_management_name = var.api_management_name
 
   # Now includes full resource ID in product_id
-  subscriptions       = local.subscriptions_with_ids
+  subscriptions = local.subscriptions_with_ids
 
   # Ensure products exist before creating subscriptions
-  depends_on          = [module.products]
+  depends_on = [module.products]
 }
 
 # Named Values (incl. KeyVault)
@@ -132,6 +145,7 @@ module "named_values" {
   resource_group_name = var.resource_group_name
   api_management_name = var.api_management_name
   named_values        = var.named_values
+  depends_on          = [data.azurerm_api_management.apim]
 }
 
 # Backends 
@@ -141,33 +155,6 @@ module "backends" {
   resource_group_name = var.resource_group_name
   api_management_name = var.api_management_name
   backends            = var.backends
+  depends_on          = [data.azurerm_api_management.apim]
 }
 
-# Global policy 
-
-module "global_policy" {
-  source              = "../../modules/global_policy"
-  resource_group_name = var.resource_group_name
-  api_management_name = var.api_management_name
-
-  # Include the global fragment in on-error for consistent JSON errors
-  xml_content = <<XML
-<policies>
-  <inbound>
-    <base />
-  </inbound>
-  <backend>
-    <base />
-  </backend>
-  <outbound>
-    <base />
-  </outbound>
-  <on-error>
-    <include-fragment fragment-id="global-error-handling" />
-  </on-error>
-</policies>
-XML
-
-  # Ensure the fragment exists before setting the global policy
-  depends_on = [module.policy_fragments]
-}
