@@ -36,8 +36,8 @@ subscriptions = [
 
 # ========= Named Values =========
 named_values = {
-  "APIM-App-ID"   = { display_name = "APIM-App-ID", secret = false, value = "<client-id-guid>" }
-  "AzureTenantID" = { display_name = "AzureTenantID", secret = false, value = "<tenant-guid>" }
+  "APIM-App-ID"   = { display_name = "APIM-App-ID", secret = false, value = "89203ccd-6d16-4ecf-b2cc-9d061b4a01f1" }
+  "AzureTenantID" = { display_name = "AzureTenantID", secret = false, value = "3615bd26-4fae-415b-a220-9cedae222489" }
   # Example Key Vault‑backed secret:
   # "Seacoast-Client-Secret" = {
   #   display_name        = "Seacoast-Client-Secret"

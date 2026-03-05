@@ -150,8 +150,15 @@ pipeline {
             if [ -n "\${NEW_RESOURCES}" ]; then
               echo "[Rollback] Found \$(echo \"\${NEW_RESOURCES}\" | wc -l) newly created resources. Destroying..."
               echo "\${NEW_RESOURCES}" | while IFS= read -r resource; do
+                # Data addresses are read-only and cannot be destroyed.
+                if [[ "\${resource}" == data.* ]]; then
+                  echo "[Rollback] Skipping data resource: \${resource}"
+                  continue
+                fi
                 echo "[Rollback] Destroying: \${resource}"
-                terraform -chdir="${TF_DIR}" destroy -target="\${resource}" -auto-approve -no-color
+                terraform -chdir="${TF_DIR}" destroy -target="\${resource}" -auto-approve -no-color \
+                  -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
+                  -var="api_management_name=${APIM_NAME_CRED}"
               done
               echo "[Rollback] Cleanup complete"
             else

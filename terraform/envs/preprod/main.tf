@@ -37,6 +37,9 @@ module "policy_fragments" {
 
   # Pass from env tfvars: map(fragment_id => relative XML path)
   fragments = var.fragments
+
+  # OAuth fragment references APIM Named Values such as {{AzureTenantID}} and {{APIM-App-ID}}.
+  depends_on = [module.named_values]
 }
 
 # Create products
