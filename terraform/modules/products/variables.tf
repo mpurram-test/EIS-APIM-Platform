@@ -11,9 +11,9 @@ variable "products" {
     terms                 = optional(string)
 
     # REQUIRED for linking module
-    api_name_patterns     = list(string)
+    api_name_patterns = list(string)
 
     # REQUIRED for product-level policies
-    product_policy_path   = optional(string)
+    product_policy_path = optional(string)
   }))
 }

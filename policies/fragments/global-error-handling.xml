@@ -6,7 +6,8 @@
 -->
 <fragment>
 	<choose>
-		<when condition="@(context.LastError != null && context.LastError.Reason == "SubscriptionKeyNotFound")">
+		<!-- single quotes inside expression avoid XML quoting problems -->
+		<when condition="@(context.LastError != null &amp;&amp; context.LastError.Reason == &quot;SubscriptionKeyNotFound&quot;)">
 			<return-response>
 				<set-status code="401" reason="Unauthorized" />
 				<set-header name="Content-Type" exists-action="override">
@@ -15,7 +16,7 @@
 				<set-body>{"status": "ERROR","errors": [{"code": 1000101,"message": "EIS-Authorization Error: Subscription key [subscriptionKey] is required."}]}</set-body>
 			</return-response>
 		</when>
-		<when condition="@(context.LastError != null && context.LastError.Reason == "SubscriptionKeyInvalid")">
+		<when condition="@(context.LastError != null &amp;&amp; context.LastError.Reason == &quot;SubscriptionKeyInvalid&quot;)">
 			<return-response>
 				<set-status code="401" reason="Unauthorized" />
 				<set-header name="Content-Type" exists-action="override">
@@ -24,7 +25,7 @@
 				<set-body>{"status": "ERROR","errors": [{"code": 1000102,"message": "EIS-Authorization Error: Subscription key [subscriptionKey] is invalid."}]}</set-body>
 			</return-response>
 		</when>
-		<when condition="@(context.LastError != null && context.LastError.Reason == "CallerIpNotAllowed")">
+		<when condition="@(context.LastError != null &amp;&amp; context.LastError.Reason == &quot;CallerIpNotAllowed&quot;)">
 			<return-response>
 				<set-status code="401" reason="Unauthorized" />
 				<set-header name="Content-Type" exists-action="override">
@@ -33,7 +34,7 @@
 				<set-body>{"status": "ERROR","errors": [{"code": 1000104,"message": "EIS-Authorization Error: Source IP address is not allowed."}]}</set-body>
 			</return-response>
 		</when>
-		<when condition="@(context.LastError != null && context.LastError.Reason == "OperationNotFound")">
+		<when condition="@(context.LastError != null &amp;&amp; context.LastError.Reason == &quot;OperationNotFound&quot;)">
 			<return-response>
 				<set-status code="404" reason="Not Found" />
 				<set-header name="Content-Type" exists-action="override">

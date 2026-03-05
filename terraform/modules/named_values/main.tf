@@ -9,7 +9,7 @@ resource "azurerm_api_management_named_value" "nv" {
   dynamic "value_from_key_vault" {
     for_each = try(each.value.key_vault_secret_id, null) != null ? [1] : []
     content {
-      secret_id         = each.value.key_vault_secret_id
+      secret_id          = each.value.key_vault_secret_id
       identity_client_id = try(each.value.identity_client_id, null)
     }
   }

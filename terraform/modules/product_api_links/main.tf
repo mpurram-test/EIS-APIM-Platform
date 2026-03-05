@@ -10,7 +10,7 @@ locals {
 resource "azurerm_api_management_product_api" "link" {
   for_each = {
     for pair in flatten([
-      for pid, names in local.product_api_matches : [ for n in names : { key = "${pid}|${n}", product = pid, api = n } ]
+      for pid, names in local.product_api_matches : [for n in names : { key = "${pid}|${n}", product = pid, api = n }]
     ]) : pair.key => pair
   }
   resource_group_name = var.resource_group_name
