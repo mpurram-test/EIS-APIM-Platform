@@ -33,11 +33,6 @@ pipeline {
           set -e
           echo "[Preflight] Checking required tools..."
 
-          if ! command -v docker >/dev/null 2>&1 && ! command -v node >/dev/null 2>&1; then
-            echo "ERROR: Need Docker or Node to run Redocly CLI."
-            exit 1
-          fi
-
           if ! command -v terraform >/dev/null 2>&1; then
             echo "ERROR: Terraform not installed."
             exit 1
@@ -96,13 +91,6 @@ pipeline {
         sh """
           #!/usr/bin/env bash
           set -e
-
-          echo "[Plan] Checking bundled specs exist at: ${WORKSPACE}/build/api-bundled"
-          if [ ! -d "${WORKSPACE}/build/api-bundled" ]; then
-            echo "ERROR: No bundled specs found at ${WORKSPACE}/build/api-bundled"
-            exit 1
-          fi
-          ls -la "${WORKSPACE}/build/api-bundled"
 
           terraform -chdir="${TF_DIR}" plan -input=false -no-color \
             -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
