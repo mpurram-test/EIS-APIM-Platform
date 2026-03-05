@@ -96,6 +96,13 @@ pipeline {
             -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
             -var="api_management_name=${APIM_NAME_CRED}" \
             -out=tfplan.out
+
+          PLAN_FILE_PATH="${TF_DIR}/tfplan.out"
+          if [ ! -f "\${PLAN_FILE_PATH}" ]; then
+            echo "ERROR: Plan command finished but plan file missing at \${PLAN_FILE_PATH}"
+            exit 1
+          fi
+          echo "[Plan] Plan file created at \${PLAN_FILE_PATH}"
         """
       }
       post {
@@ -111,9 +118,14 @@ pipeline {
           #!/usr/bin/env bash
           set -e
 
-          PLAN_FILE="${TF_DIR}/tfplan.out"
-          if [ ! -f "\${PLAN_FILE}" ]; then
-            echo "ERROR: Plan file not found at \${PLAN_FILE}"
+          PLAN_FILE="tfplan.out"
+          PLAN_FILE_PATH="${TF_DIR}/\${PLAN_FILE}"
+          echo "[Apply] Workspace: \$(pwd)"
+          echo "[Apply] TF_DIR=${TF_DIR}"
+          echo "[Apply] Expecting plan at \${PLAN_FILE_PATH}"
+          if [ ! -f "\${PLAN_FILE_PATH}" ]; then
+            echo "ERROR: Plan file not found at \${PLAN_FILE_PATH}"
+            ls -la "${TF_DIR}" || true
             exit 1
           fi
 
