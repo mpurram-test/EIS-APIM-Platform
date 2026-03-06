@@ -1,6 +1,3 @@
-# ========= Basic service =========
-
-
 # ========= Fragments (upload once, then reuse) =========
 fragments = {
   "global-error-handling" = "../../../policies/fragments/global-error-handling.xml"
