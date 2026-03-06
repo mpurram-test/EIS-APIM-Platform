@@ -117,6 +117,26 @@ module "links" {
 locals {
   product_ids_by_pid = try(module.products.id, {})
 
+  # Keep named values definition consistent with other top-level vars.
+  # CI/CD can pass simple -var values (apim_app_id/azure_tenant_id), while tfvars remains a fallback.
+  effective_named_values = merge(
+    var.named_values,
+    var.apim_app_id != null ? {
+      "APIM-App-ID" = {
+        display_name = "APIM-App-ID"
+        secret       = true
+        value        = var.apim_app_id
+      }
+    } : {},
+    var.azure_tenant_id != null ? {
+      "AzureTenantID" = {
+        display_name = "AzureTenantID"
+        secret       = true
+        value        = var.azure_tenant_id
+      }
+    } : {}
+  )
+
   # Remap each subscription so 'product_id' becomes the product resource ID.
   # This lets you use the short key (e.g., "quavo") in terraform.tfvars.
   subscriptions_with_ids = [
@@ -147,7 +167,7 @@ module "named_values" {
   source              = "../../modules/named_values"
   resource_group_name = var.resource_group_name
   api_management_name = var.api_management_name
-  named_values        = var.named_values
+  named_values        = local.effective_named_values
   depends_on          = [data.azurerm_api_management.apim]
 }
 

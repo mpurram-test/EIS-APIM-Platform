@@ -1,4 +1,4 @@
-resource "azurerm_api_management_backend" "b" {
+resource "azurerm_api_management_backend" "backend" {
   for_each            = var.backends
   name                = each.key
   resource_group_name = var.resource_group_name
