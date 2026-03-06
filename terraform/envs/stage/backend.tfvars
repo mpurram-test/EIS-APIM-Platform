@@ -1,6 +1,4 @@
-# Remote state backend settings for stage
-# Fill these values for your environment.
-resource_group_name  = "<stage-tfstate-resource-group>"
-storage_account_name = "<stage-tfstate-storage-account>"
-container_name       = "<stage-tfstate-container>"
-key                  = "apim/platform/stage.tfstate"
+resource_group_name  = "scb-stg-tfstate-eus2-rg-01"
+storage_account_name = "scbstgtfstateeus201"
+container_name       = "apim-stg-tfstate"
+key                  = "apim/platform/preprod.tfstate"
