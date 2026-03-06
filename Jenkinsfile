@@ -51,28 +51,8 @@ pipeline {
     stage('Resolve ENV & Credentials') {
       steps {
         script {
-          env.TF_ENV = params.ENV?.trim()
-          if (!env.TF_ENV) {
-            error "ENV build parameter is required (for example: stage or ${PROD_ENV})"
-          }
-
-          if (!SUPPORTED_ENVS.contains(env.TF_ENV)) {
-            error "Unsupported ENV=${env.TF_ENV}. Expected one of: ${SUPPORTED_ENVS.join(', ')}"
-          }
-
-          env.TF_DIR = "terraform/envs/${env.TF_ENV}"
-          env.BACKEND_FILE = "backend.tfvars"
-          String credPrefix = env.TF_ENV
-
-          env.CRED_RG_ID = "${credPrefix}-apim-rg-name"
-          env.CRED_APIM_NAME_ID = "${credPrefix}-apim-apim-name"
-          env.CRED_APP_ID = "${credPrefix}-apim-app-id"
-          env.CRED_AZURE_SUBSCRIPTION_ID = "${credPrefix}-apim-azure-subscription-id"
-          env.CRED_AZURE_CLIENT_ID = "${credPrefix}-apim-azure-client"
-          env.CRED_AZURE_CLIENT_SECRET = "${credPrefix}-apim-azure-secret"
-          env.CRED_AZURE_TENANT_ID = "${credPrefix}-apim-azure-tenant"
-
-          echo "Computed ENV=${env.TF_ENV}  TF_DIR=${env.TF_DIR}  BACKEND_FILE=${env.BACKEND_FILE}  CRED_PREFIX=${credPrefix}"
+          validateEnvironment()
+          configureCredentials()
         }
       }
     }
@@ -243,4 +223,31 @@ pipeline {
       '''
     }
   }
+}
+
+// Helper methods to reduce nesting and improve readability
+void validateEnvironment() {
+  env.TF_ENV = params.ENV?.trim()
+  if (!env.TF_ENV) {
+    error 'ENV build parameter is required (for example: stage or prod)'
+  }
+  if (!SUPPORTED_ENVS.contains(env.TF_ENV)) {
+    error "Unsupported ENV=${env.TF_ENV}. Expected one of: ${SUPPORTED_ENVS.join(', ')}"
+  }
+}
+
+void configureCredentials() {
+  String credPrefix = env.TF_ENV
+  env.with {
+    TF_DIR = "terraform/envs/${env.TF_ENV}"
+    BACKEND_FILE = 'backend.tfvars'
+    CRED_RG_ID = "${credPrefix}-apim-rg-name"
+    CRED_APIM_NAME_ID = "${credPrefix}-apim-apim-name"
+    CRED_APP_ID = "${credPrefix}-apim-app-id"
+    CRED_AZURE_SUBSCRIPTION_ID = "${credPrefix}-apim-azure-subscription-id"
+    CRED_AZURE_CLIENT_ID = "${credPrefix}-apim-azure-client"
+    CRED_AZURE_CLIENT_SECRET = "${credPrefix}-apim-azure-secret"
+    CRED_AZURE_TENANT_ID = "${credPrefix}-apim-azure-tenant"
+  }
+  echo "Computed ENV=${env.TF_ENV} TF_DIR=${env.TF_DIR} BACKEND_FILE=${env.BACKEND_FILE}"
 }
