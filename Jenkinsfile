@@ -1,10 +1,10 @@
-/* groovylint-disable */
+/* groovylint-disable DuplicateStringLiteral, CompileStatic */
 
 import groovy.transform.Field
 
 // Constants to eliminate duplicate string literals
 @Field static final String PROD_ENV = 'prod'
-@Field static final List SUPPORTED_ENVS = ['stage', PROD_ENV]
+@Field static final List SUPPORTED_ENVS = ['stage', 'prod']
 @Field static final String ARM_SUBSCRIPTION_ID = 'ARM_SUBSCRIPTION_ID'
 @Field static final String ARM_CLIENT_ID = 'ARM_CLIENT_ID'
 @Field static final String ARM_CLIENT_SECRET = 'ARM_CLIENT_SECRET'
