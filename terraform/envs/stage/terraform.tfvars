@@ -1,4 +1,3 @@
-
 # ========= Fragments (upload once, then reuse) =========
 fragments = {
   "global-error-handling" = "../../../policies/fragments/global-error-handling.xml"
@@ -36,8 +35,8 @@ subscriptions = [
 
 # ========= Named Values =========
 named_values = {
-  "APIM-App-ID"   = { display_name = "APIM-App-ID", secret = false, value = "89203ccd-6d16-4ecf-b2cc-9d061b4a01f1" }
-  "AzureTenantID" = { display_name = "AzureTenantID", secret = false, value = "3615bd26-4fae-415b-a220-9cedae222489" }
+  # Keep this map for non-secret/static values only.
+  # APIM-App-ID and AzureTenantID are injected by CI via -var (apim_app_id, azure_tenant_id).
   # Example Key Vault‑backed secret:
   # "Seacoast-Client-Secret" = {
   #   display_name        = "Seacoast-Client-Secret"

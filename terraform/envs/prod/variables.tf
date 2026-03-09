@@ -1,6 +1,20 @@
 variable "resource_group_name" { type = string }
 variable "api_management_name" { type = string }
 
+variable "apim_app_id" {
+  description = "Optional override for named value APIM-App-ID (typically injected by CI/CD)."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "azure_tenant_id" {
+  description = "Optional override for named value AzureTenantID (typically injected by CI/CD)."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
 variable "fragments" {
   type    = map(string)
   default = {}

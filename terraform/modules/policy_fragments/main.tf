@@ -4,7 +4,7 @@ data "azurerm_api_management" "apim" {
   resource_group_name = var.resource_group_name
 }
 
-resource "azurerm_api_management_policy_fragment" "this" {
+resource "azurerm_api_management_policy_fragment" "fragment" {
   for_each          = var.fragments
   api_management_id = data.azurerm_api_management.apim.id
   name              = each.key

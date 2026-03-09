@@ -1,4 +1,4 @@
-resource "azurerm_api_management_product" "prod" {
+resource "azurerm_api_management_product" "product" {
   for_each              = var.products
   product_id            = each.key
   resource_group_name   = var.resource_group_name
