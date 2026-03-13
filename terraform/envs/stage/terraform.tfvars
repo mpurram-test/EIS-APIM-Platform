@@ -47,5 +47,5 @@ named_values = {
 
 # ========= Backends =========
 backends = {
-  PartyAPI = { url = "https://customer.api.seacoastbank.com", protocol = "https", description = "Party backend" }
+  PartyAPI = { url = "https://customer.api.uat.seacoastbank.com", protocol = "https", description = "Party backend" }
 }
