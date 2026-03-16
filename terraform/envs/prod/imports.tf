@@ -1,14 +1,3 @@
-# # terraform/envs/prod/imports.tf
-
-# # Variables provided by Jenkins or terraform.tfvars
-# variable "subscription_id" {
-#   type = string
-# }
-
-
-# ##############################################
-# # IMPORTS for resources that already exist
-# ##############################################
 
 # # Backend: PartyAPI
 # import {
