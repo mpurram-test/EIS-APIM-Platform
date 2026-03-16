@@ -81,7 +81,6 @@ pipeline {
     }
 
     stage('Change Information') {
-      when { expression { env.TF_ENV == 'prod' } }
       parallel {
         stage('Get Existing Change Ticket') {
           agent none
@@ -109,7 +108,7 @@ pipeline {
     stage('Update Change Ticket') {
       agent none
       options { skipDefaultCheckout() }
-      when { expression { env.TF_ENV == 'prod' && env.SYS_ID != '' && env.SYS_ID != null } }
+      when { expression { env.SYS_ID != '' && env.SYS_ID != null } }
       steps {
         script {
           def changeLogDesc = getSCMChanges()
@@ -170,7 +169,6 @@ pipeline {
 
           echo "[Init] Using TF_DIR=${TF_DIR}"
           terraform -chdir="${TF_DIR}" init -backend-config=backend.tfvars -input=false -no-color
-
           set +e
           FMT_OUTPUT=$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
           FMT_STATUS=$?
@@ -196,9 +194,9 @@ pipeline {
           export TF_VAR_apim_app_id="${APIM_APP_ID_CRED}"
           export TF_VAR_azure_tenant_id="${ARM_TENANT_ID}"
           terraform -chdir="${TF_DIR}" plan -input=false -no-color \
-            -var="subscription_id=${ARM_SUBSCRIPTION_ID}" \
             -var="resource_group_name=${RESOURCE_GROUP_NAME_CRED}" \
             -var="api_management_name=${APIM_NAME_CRED}" \
+            -var="subscription_id=${ARM_SUBSCRIPTION_ID}" \
             -out=tfplan.out
 
           PLAN_FILE_PATH="${TF_DIR}/tfplan.out"
@@ -220,7 +218,7 @@ pipeline {
     stage('Start Implementation') {
       agent { label 'dev' }
       options { skipDefaultCheckout() }
-      when { expression { env.TF_ENV == 'prod' && env.SYS_ID != '' && env.SYS_ID != null } }
+      when { expression {env.SYS_ID != '' && env.SYS_ID != null } }
       steps {
         script {
           updateSNOWChange('', 'implement')
@@ -273,7 +271,7 @@ pipeline {
     stage('Post Implementation') {
       agent { label 'dev' }
       options { skipDefaultCheckout() }
-      when { expression { env.TF_ENV == 'prod' && env.SYS_ID != '' && env.SYS_ID != null } }
+      when { expression {env.SYS_ID != '' && env.SYS_ID != null } }
       steps {
         script {
           getSNOWChangeTask('Post%20implementation%20testing')
