@@ -168,7 +168,7 @@ pipeline {
           set -e
 
           echo "[Init] Using TF_DIR=${TF_DIR}"
-          terraform init -backend-config=backend.tfvars -reconfigure -input=false -no-color
+          terraform -chdir="${TF_DIR}" init -backend-config=backend.tfvars -reconfigure -input=false -no-color
           set +e
           FMT_OUTPUT=$(terraform -chdir="${TF_DIR}" fmt -check -diff -recursive -no-color 2>&1)
           FMT_STATUS=$?
